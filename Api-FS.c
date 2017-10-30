@@ -459,6 +459,177 @@ void StampaAlbero(int n, struct Nodo * sNode)
 	if (sNode->dF!=NULL) StampaAlbero(n, sNode->dF);
 	}
 
+void avvio_file()
+{int linea=0;
+       
+  FILE * fp;
+  char * line = NULL;
+  size_t lenz = 0;
+
+  char stringa[100000]; // secondo me andra' sistemata la dimensione
+  char percorso[100000]; // da aumentare
+  char nome[257]; // questo invece va bene cosi'
+  struct Nodo *nodo;
+  int exit1=0;
+  
+ 
+  fp = fopen("/home/davide/Scrivania/Api-FS.c", "r");
+  if (fp == NULL){
+     printf("fp NULL\n");
+     exit(EXIT_FAILURE);
+  }
+ 
+  while((getline(&line, &lenz, fp)) != -1)
+  { //linea=linea+1;
+    //printf("%i  ", linea);      
+    strcpy(stringa, "");
+    strcpy(stringa, line);
+    strcpy(nome,"");
+    strcpy(percorso,"");
+    int LenStringa=len(stringa);
+    char istruzione[LenStringa];
+    istr(stringa,istruzione); // ora dentro istruzione c'e' l'istruzione
+
+
+    stringa[strlen(stringa)-1]='\0';
+    nodo=NULL;
+	  
+	 
+    //CREATE
+    if(strcmp(istruzione,"create")==0)
+    { strcpy(percorso,perc(stringa));
+      int LastPercorso=last(percorso);
+      char risultato[2];
+      char percorsoNoName[LastPercorso+1];
+      strcpy(percorsoNoName,"");
+      naming(percorso,nome,risultato);
+      strncpy(percorsoNoName,percorso,LastPercorso);
+      percorsoNoName[LastPercorso]='\0';
+      if(strcmp(risultato,"a")==0)
+      {nodo=create(nome,percorsoNoName,1,"");}
+      //free(percorsoNoName);
+      if (nodo!= NULL) 
+          printf("ok\n");
+      else 
+          printf("no\n");
+    }
+    //CREATE_DIR
+    if(strcmp(istruzione,"create_dir")==0)
+    { strcpy(percorso,perc(stringa));
+      int LastPercorso=last(percorso);
+      char risultato[2];
+      char percorsoNoName[LastPercorso+1]; 
+      strcpy(percorsoNoName,"");
+      naming(percorso,nome,risultato);
+      strncpy(percorsoNoName,percorso,LastPercorso);
+      percorsoNoName[LastPercorso]='\0';
+      if(strcmp(risultato,"a")==0)
+      {nodo=create(nome,percorsoNoName,0,"");}
+      //free(percorsoNoName);
+      if (nodo!= NULL) 
+          printf("ok\n");
+      else 
+          printf("no\n");
+    }
+    //EXIT
+    if(strcmp(istruzione,"exit")==0)
+    {exit1=1;}
+    //READ
+    if(strcmp(istruzione,"read")==0) // inutile chiamare una funzione per una cosa che si fa solo una volta, perdita di tempo per il compilatore
+    { nodo=TrovaPadre(perc(stringa));
+      if(nodo==NULL)
+          printf("no\n");
+      else
+          {if(nodo->essere==1)
+        printf("contenuto %s\n", nodo->contenuto);
+    else
+        printf("no\n");                 
+    }
+     }
+     //WRITE
+     if(strcmp(istruzione, "write")==0)
+    {char testo[500]="";//va dichiarato cosi' se no poi da problemi quando si sovrascrive
+     char conte[LenStringa]; // piu' lunga del dovuto
+     char IstrPerc[len(perc(stringa))];
+     char risultato[2];
+     w2(stringa,conte,risultato);
+     //printf("%s\n",risultato);
+     int l=len(conte); // lunghezza contenuto
+     if(l>500 || strcmp(risultato,"b")==0 )
+         {printf("no\n");}
+     else 
+         {strcpy(testo,conte);}
+     istr(perc(stringa),IstrPerc);
+     strcpy(percorso,IstrPerc);
+     nodo=TrovaPadre(percorso);
+     if(nodo==NULL )// || alfanumerico(testo)==0) 
+         {printf("no\n");
+	  
+	}
+    else if(nodo!=NULL && strcmp(risultato,"a")==0 && l<=500)
+    {    if(nodo->essere==1 )
+            {int l=len(testo);
+            strcpy(nodo->contenuto, testo); // cosi' sovrascrive
+            printf("ok %i\n",l);}
+        else
+            printf("no\n");                 
+    }
+         
+    }
+    //FIND
+    if(strcmp(istruzione, "find")==0)
+     {char registro[100000];
+      registro[0]='\0';
+      int sp=ig(stringa); 
+      char nomefind[LenStringa-sp];
+      strcpy(nomefind,"");
+      struct Nodo *radice=&root;
+      //int l=len(perc(stringa)); //roba strana
+      NomeFind(stringa,nomefind);
+      //printf("%s\n",nomefind);
+      int cont=0; //numero di oggetti trovati con quel nome
+      find(nomefind,radice,registro,&cont);
+      //printf("%d\n",cont);
+      if(len(registro)==0)
+          {printf("no\n");}
+      else
+          {//printf("%s\n",registro);
+           StampaFind(registro,cont);}
+      }
+      
+     //STAMPA ALBERO
+    if(strcmp(istruzione,"stampa")==0 || strcmp(istruzione,"ls")==0 || strcmp(istruzione,"print")==0)
+    {printf("\033[31mFILE SYSTEM\033[0m\n"); // stampa rossa di file system prima dell'inizio della stampa dell'albero
+     StampaAlbero(0,&root);
+     printf("\033[31mEND\033[0m\n");} 
+     
+    //DELETE
+    if(strcmp(istruzione, "delete")==0)
+     {struct Nodo *nodoDelete=TrovaPadre(perc(stringa));
+      if(nodoDelete!=NULL && nodoDelete->FileFiglio==NULL && nodoDelete->DirFiglio==NULL) //|| nodoDelete->Nfigli!=0)
+      	{delete(nodoDelete);
+         printf("ok\n");}
+          
+      else
+          {printf("no\n");}
+      }
+    //DELETE_R
+    if(strcmp(istruzione, "delete_r")==0)
+     {struct Nodo *nodoDelete=TrovaPadre(perc(stringa));
+      if(nodoDelete==NULL)
+          printf("no\n");
+      else
+          {if(nodoDelete->Nfigli==0)
+              printf("ok\n"); 
+           else
+               {deleteTOT(nodoDelete);
+               printf("ok\n");}
+           }
+     }
+  } // while
+ free(line);
+} // funzione	  
+
 
 void avvio() // magari da problemi sul reset dei vettori, verificare in caso
 { 
